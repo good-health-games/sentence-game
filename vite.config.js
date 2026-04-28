@@ -13,9 +13,9 @@ export default defineConfig({
       registerType: 'autoUpdate', // 自動更新 PWA
       includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
       manifest: {
-        name: '康傑中文重組句子遊戲',
-        short_name: '重組句子',
-        description: '專為 K3 設計的中文重組句子遊戲',
+        name: '句子拼拼樂',
+        short_name: '句子拼拼樂',
+        description: '句子拼拼樂',
         theme_color: '#243c64', // 你的深藍色
         background_color: '#f0f9ff', // sky-50
         display: 'standalone', // 隱藏瀏覽器網址列，像原生 App
