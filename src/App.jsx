@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, XCircle, RotateCcw, ArrowRight, Play, Star, School, Lock, Home, Building, Globe, Activity, Calendar, Coins, Heart, Leaf, GraduationCap, ChevronLeft, ChevronRight, ChevronDown, Smile, Utensils, Users, Cat, CloudSun, TreePine, Briefcase, Car, LogOut, Settings, Database, Filter, UserCircle, Edit3, Search } from 'lucide-react';
+import { CheckCircle2, XCircle, RotateCcw, ArrowRight, Play, Star, School, Lock, Home, Building, Globe, Activity, Calendar, Coins, Heart, Leaf, GraduationCap, ChevronLeft, ChevronRight, ChevronDown, Smile, Utensils, Users, Cat, CloudSun, TreePine, Briefcase, Car, LogOut, Settings, Database, Filter, UserCircle, Edit3, Search, Trash2, AlertTriangle, Loader2 } from 'lucide-react';
 
 // --- Firebase 初始化區塊開始 ---
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, doc } from 'firebase/firestore';
 
 // ⚠️ 已經使用你專屬的 firebaseConfig
 const firebaseConfig = {
@@ -144,6 +144,10 @@ export default function App() {
   const [filterClass, setFilterClass] = useState('All');
   const [searchQuery, setSearchQuery] = useState(''); // 新增：搜尋學生關鍵字
 
+  // 新增：刪除處理狀態
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
   // 判斷當前使用者是否為老師帳號
   const isAdmin = user && ADMIN_EMAILS.includes(user.email);
 
@@ -245,6 +249,32 @@ export default function App() {
       setAdminRecords(records);
     } catch (error) {
       console.error("無法載入成績", error);
+    }
+  };
+
+  // 💡 新增：一鍵清除特定學生所有紀錄
+  const handleDeleteStudentRecords = async () => {
+    if (!selectedStudent || !isAdmin) return;
+    setIsDeleting(true);
+    try {
+      const batch = writeBatch(db);
+      const studentRecords = adminRecords.filter(r => r.userId === selectedStudent);
+      
+      studentRecords.forEach((record) => {
+        const docRef = doc(db, "scores", record.id);
+        batch.delete(docRef);
+      });
+
+      await batch.commit();
+      
+      // 更新本地狀態
+      setAdminRecords(prev => prev.filter(r => r.userId !== selectedStudent));
+      setSelectedStudent(null);
+      setShowDeleteConfirm(false);
+    } catch (error) {
+      console.error("刪除失敗", error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -629,16 +659,25 @@ export default function App() {
                       </span>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => {
-                      setSelectedStudent(null);
-                      setExpandedThemes({});
-                      setExpandedLevels({});
-                    }}
-                    className="flex items-center gap-1 text-sky-600 hover:text-sky-800 font-bold bg-sky-50 hover:bg-sky-100 px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
-                  >
-                    <ChevronLeft className="w-5 h-5" /> 返回名單
-                  </button>
+                  <div className="flex items-center gap-3">
+                    {/* 🗑️ 刪除按鈕 */}
+                    <button 
+                      onClick={() => setShowDeleteConfirm(true)} 
+                      className="flex items-center gap-1.5 text-red-500 hover:text-white hover:bg-red-500 border border-red-200 px-4 py-2 rounded-lg font-bold transition-all text-sm"
+                    >
+                      <Trash2 className="w-4 h-4" /> 刪除學生紀錄
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setSelectedStudent(null);
+                        setExpandedThemes({});
+                        setExpandedLevels({});
+                      }}
+                      className="flex items-center gap-1 text-sky-600 hover:text-sky-800 font-bold bg-sky-50 hover:bg-sky-100 px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
+                    >
+                      <ChevronLeft className="w-5 h-5" /> 返回名單
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-8">
@@ -760,6 +799,23 @@ export default function App() {
             )}
           </div>
         </div>
+
+        {/* 💡 自定義確認刪除對話框 */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 border-t-8 border-red-500 scale-in-center">
+              <div className="flex justify-center mb-6"><div className="p-4 bg-red-50 rounded-full text-red-500"><AlertTriangle size={48} /></div></div>
+              <h3 className="text-xl font-bold text-gray-800 text-center mb-2">確認要刪除紀錄嗎？</h3>
+              <p className="text-gray-500 text-center text-sm mb-8 leading-relaxed">這將會永久清除此學生的所有分數資料，無法復原。建議先在 Authentication 刪除帳號，再執行此操作。</p>
+              <div className="flex gap-3">
+                <button disabled={isDeleting} onClick={() => setShowDeleteConfirm(false)} className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl font-bold transition-all disabled:opacity-50">取消</button>
+                <button disabled={isDeleting} onClick={handleDeleteStudentRecords} className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold transition-all shadow-[0_4px_0_rgb(185,28,28)] active:translate-y-1 active:shadow-none flex items-center justify-center gap-2">
+                  {isDeleting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trash2 className="w-5 h-5" />} {isDeleting ? '正在刪除' : '確認刪除'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
