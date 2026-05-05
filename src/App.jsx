@@ -1,9 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, XCircle, RotateCcw, ArrowRight, Play, Star, School, Lock, Home, Building, Globe, Activity, Calendar, Coins, Heart, Leaf, GraduationCap, ChevronLeft, Smile, Utensils, Users, Cat, CloudSun, TreePine, Briefcase, Car } from 'lucide-react';
+import { CheckCircle2, XCircle, RotateCcw, ArrowRight, Play, Star, School, Lock, Home, Building, Globe, Activity, Calendar, Coins, Heart, Leaf, GraduationCap, ChevronLeft, Smile, Utensils, Users, Cat, CloudSun, TreePine, Briefcase, Car, LogOut, Settings, Database } from 'lucide-react';
+
+// --- Firebase 初始化區塊開始 ---
+import { initializeApp } from "firebase/app";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp } from 'firebase/firestore';
+
+// ⚠️ 已經使用你專屬的 firebaseConfig
+const firebaseConfig = {
+  apiKey: "AIzaSyDVFleEaYeQJ9cEGeoFzfCZtktIFeHG3Xk",
+  authDomain: "gh-sentence-game.firebaseapp.com",
+  projectId: "gh-sentence-game",
+  storageBucket: "gh-sentence-game.firebasestorage.app",
+  messagingSenderId: "205536614211",
+  appId: "1:205536614211:web:5be3015cbcde0e49efc1f6",
+  measurementId: "G-RPN815YZWD"
+};
+
+// 將 Firebase 初始化直接寫在這裡，確保單一檔案能順利編譯
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+// --- Firebase 初始化區塊結束 ---
+
+// 👮‍♀️ 老師帳號設定：在這裡填寫可以看見後台的 Email
+const ADMIN_EMAILS = ['admin@gh.com'];
 
 // 高清康傑教育機構 Logo 元件
 const GHLogo = () => (
-  <div className="bg-[#243c64] text-white p-6 rounded-2xl shadow-md w-full mb-6 flex flex-col items-center">
+  <div className="bg-[#243c64] text-white p-6 rounded-2xl shadow-md w-full mb-6 flex flex-col items-center relative">
     <svg viewBox="0 0 100 115" className="w-20 h-24 mb-4">
       <path
         d="M 5 5 L 95 5 L 95 65 C 95 95 50 110 50 110 C 50 110 5 95 5 65 Z"
@@ -21,7 +46,7 @@ const GHLogo = () => (
   </div>
 );
 
-// 遊戲題庫：各級別與主題分類 (中英文獨立開關)
+// 遊戲題庫：使用您提供的完整題庫版本
 const GRADES_DATA = {
   'K2': {
     themes: [
@@ -304,7 +329,13 @@ const shuffleArray = (array) => {
 };
 
 export default function App() {
-  const [view, setView] = useState('home');
+  const [user, setUser] = useState(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [loadingAuth, setLoadingAuth] = useState(true);
+
+  const [view, setView] = useState('home'); 
   const [previousView, setPreviousView] = useState('home');
   const [currentGrade, setCurrentGrade] = useState(null);
   const [currentLanguage, setCurrentLanguage] = useState('zh');
@@ -315,6 +346,84 @@ export default function App() {
   const [status, setStatus] = useState('playing');
   const [score, setScore] = useState(0);
   const [gameFinished, setGameFinished] = useState(false);
+  
+  const [adminRecords, setAdminRecords] = useState([]);
+  const [selectedStudent, setSelectedStudent] = useState(null); // 新增：用來記錄目前選中查看的學生
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoadingAuth(false);
+      if (!currentUser && view !== 'login') {
+        setView('login');
+      } else if (currentUser && view === 'login') {
+        setView('home');
+      }
+    });
+    return () => unsubscribe();
+  }, [view]);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoginError('');
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      setView('home');
+    } catch (error) {
+      setLoginError('登入失敗，請檢查帳號或密碼是否正確。');
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setView('login');
+      setEmail('');
+      setPassword('');
+      setScore(0);
+      setCurrentLevel(0);
+    } catch (error) {
+      console.error("登出失敗", error);
+    }
+  };
+
+  const saveScoreToDB = async () => {
+    if (!user) return;
+    try {
+      await addDoc(collection(db, "scores"), {
+        userId: user.email,
+        grade: currentGrade,
+        language: currentLanguage,
+        theme: currentTheme,
+        level: currentLevel + 1,
+        scoreEarned: 10,
+        timestamp: serverTimestamp()
+      });
+      console.log("成績已儲存至雲端！");
+    } catch (e) {
+      console.error("儲存成績發生錯誤: ", e);
+    }
+  };
+
+  const fetchAdminRecords = async () => {
+    try {
+      const q = query(collection(db, "scores"), orderBy("timestamp", "desc"));
+      const querySnapshot = await getDocs(q);
+      const records = [];
+      querySnapshot.forEach((doc) => {
+        records.push({ id: doc.id, ...doc.data() });
+      });
+      setAdminRecords(records);
+    } catch (error) {
+      console.error("無法載入成績", error);
+    }
+  };
+
+  const openAdminPanel = () => {
+    fetchAdminRecords();
+    setSelectedStudent(null); // 打開後台時，先重置回學生列表畫面
+    setView('admin');
+  };
 
   const handleSelectGrade = (grade) => {
     if (grade === 'K2' || grade === 'K3') {
@@ -383,8 +492,10 @@ export default function App() {
   };
 
   useEffect(() => {
-    initLevel(currentLevel);
-  }, [currentLevel, currentTheme]);
+    if (view === 'playing') {
+      initLevel(currentLevel);
+    }
+  }, [currentLevel, currentTheme, view]);
 
   const moveToAnswer = (wordObj) => {
     if (status === 'correct') return;
@@ -408,6 +519,7 @@ export default function App() {
     if (currentAttempt === originalSentence && wordBank.length === 0) {
       setStatus('correct');
       setScore((prev) => prev + 10);
+      saveScoreToDB(); // 答對即自動上傳成績至雲端
     } else {
       setStatus('wrong');
     }
@@ -433,11 +545,172 @@ export default function App() {
     initLevel(0); 
   };
 
-  if (view === 'home') {
+  // --- 畫面渲染區塊 ---
+
+  if (loadingAuth) {
+    return (
+      <div className="min-h-screen bg-sky-50 flex items-center justify-center font-sans">
+        <div className="text-xl font-bold text-sky-600 animate-pulse flex items-center gap-3">
+          <Database className="w-6 h-6 animate-spin" />
+          正在連接雲端系統...
+        </div>
+      </div>
+    );
+  }
+
+  if (view === 'login' || !user) {
     return (
       <div className="min-h-screen bg-sky-50 flex flex-col items-center justify-center p-4 font-sans">
-        <div className="bg-white rounded-3xl shadow-xl p-6 max-w-md w-full text-center border-t-8 border-[#243c64]">
+        <div className="bg-white rounded-3xl shadow-xl p-8 max-w-md w-full border-t-8 border-[#243c64]">
           <GHLogo />
+          <h2 className="text-2xl font-bold text-center text-gray-800 mb-6 flex items-center justify-center gap-2">
+            <Lock className="w-6 h-6 text-sky-500" /> 學生登入
+          </h2>
+          {loginError && <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm mb-4 text-center font-bold">{loginError}</div>}
+          <form onSubmit={handleLogin} className="space-y-5">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">登入帳號</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-sky-500 focus:ring-0 outline-none transition-colors font-medium text-gray-700" placeholder="例如: k3a01@gh.com" />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">密碼</label>
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-sky-500 focus:ring-0 outline-none transition-colors font-medium text-gray-700" placeholder="請輸入密碼" />
+            </div>
+            <button type="submit" className="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-4 rounded-xl shadow-[0_4px_0_rgb(2,132,199)] active:shadow-none active:translate-y-1 transition-all text-lg mt-2 flex items-center justify-center gap-2">
+              進入遊戲 <ArrowRight className="w-5 h-5" />
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  if (view === 'admin') {
+    // 將平鋪的紀錄，根據 userId 分組
+    const groupedRecords = adminRecords.reduce((acc, record) => {
+      if (!acc[record.userId]) acc[record.userId] = [];
+      acc[record.userId].push(record);
+      return acc;
+    }, {});
+    
+    const uniqueStudents = Object.keys(groupedRecords);
+
+    return (
+      <div className="min-h-screen bg-gray-100 p-4 sm:p-8 font-sans">
+        <div className="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-200">
+          <div className="bg-[#243c64] p-6 text-white flex flex-col sm:flex-row justify-between items-center gap-4">
+            <h1 className="text-2xl font-bold flex items-center gap-2"><Database className="w-6 h-6 text-sky-300" /> 後台成績管理系統</h1>
+            <button onClick={goHome} className="bg-white/20 hover:bg-white/30 px-5 py-2.5 rounded-xl font-bold transition-colors flex items-center gap-2">
+              <Home className="w-5 h-5" /> 返回首頁
+            </button>
+          </div>
+          
+          <div className="p-6">
+            {!selectedStudent ? (
+              // --- 顯示學生列表 (第一層) ---
+              <div>
+                <h2 className="text-xl font-bold text-gray-700 mb-6 flex items-center gap-2">
+                  <Users className="w-5 h-5" /> 學生名單總覽
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {uniqueStudents.length === 0 ? (
+                    <div className="col-span-full text-center p-10 text-gray-500 font-medium bg-gray-50 rounded-2xl">
+                      目前還沒有任何成績紀錄，請先去玩幾關吧！
+                    </div>
+                  ) : (
+                    uniqueStudents.map(student => {
+                      const records = groupedRecords[student];
+                      const totalScore = records.reduce((sum, r) => sum + r.scoreEarned, 0);
+                      const lastPlayed = records[0].timestamp?.toDate().toLocaleString() || '剛剛';
+                      
+                      return (
+                        <button 
+                          key={student}
+                          onClick={() => setSelectedStudent(student)}
+                          className="flex items-center justify-between p-5 bg-white border-2 border-gray-100 rounded-2xl hover:border-sky-300 hover:bg-sky-50 transition-all text-left shadow-sm hover:shadow"
+                        >
+                          <div>
+                            <div className="font-bold text-lg text-[#243c64] mb-1">{student}</div>
+                            <div className="text-xs text-gray-500">最後登入: <br className="sm:hidden" />{lastPlayed}</div>
+                          </div>
+                          <div className="text-right pl-4">
+                            <div className="font-bold text-2xl text-amber-500">{totalScore} 分</div>
+                            <div className="text-xs text-gray-400 font-medium">{records.length} 項紀錄</div>
+                          </div>
+                        </button>
+                      )
+                    })
+                  )}
+                </div>
+              </div>
+            ) : (
+              // --- 顯示單一學生的成績表格 (第二層) ---
+              <div className="overflow-x-auto animate-in fade-in slide-in-from-right-4 duration-300">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+                  <h2 className="text-xl font-bold text-[#243c64] flex items-center gap-2">
+                    <Users className="w-6 h-6 text-sky-500" /> {selectedStudent} 的專屬成績
+                  </h2>
+                  <button 
+                    onClick={() => setSelectedStudent(null)}
+                    className="flex items-center gap-1 text-sky-600 hover:text-sky-800 font-bold bg-sky-50 hover:bg-sky-100 px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
+                  >
+                    <ChevronLeft className="w-5 h-5" /> 返回名單
+                  </button>
+                </div>
+
+                <table className="w-full text-left border-collapse min-w-[600px]">
+                  <thead>
+                    <tr className="bg-sky-50 text-sky-800">
+                      <th className="p-4 border-b-2 border-sky-100 font-bold rounded-tl-xl w-48">過關時間</th>
+                      <th className="p-4 border-b-2 border-sky-100 font-bold">級別</th>
+                      <th className="p-4 border-b-2 border-sky-100 font-bold w-1/3">主題</th>
+                      <th className="p-4 border-b-2 border-sky-100 font-bold">關卡</th>
+                      <th className="p-4 border-b-2 border-sky-100 font-bold rounded-tr-xl text-right pr-6">得分</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {groupedRecords[selectedStudent].map((record) => {
+                      const themeName = GRADES_DATA[record.grade]?.themes.find(t => t.id === record.theme)?.name || record.theme;
+                      return (
+                        <tr key={record.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                          <td className="p-4 text-sm text-gray-500 font-medium">{record.timestamp?.toDate().toLocaleString() || '剛剛'}</td>
+                          <td className="p-4 font-bold text-gray-700">{record.grade}</td>
+                          <td className="p-4 font-medium text-gray-700">{themeName}</td>
+                          <td className="p-4 text-sky-600 font-bold">第 {record.level} 關</td>
+                          <td className="p-4 font-bold text-green-600 bg-green-50/50 rounded-lg text-right pr-6">+{record.scoreEarned}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (view === 'home') {
+    return (
+      <div className="min-h-screen bg-sky-50 flex flex-col items-center justify-center p-4 font-sans relative">
+        <button onClick={handleLogout} className="absolute top-4 right-4 flex items-center gap-2 text-gray-500 hover:text-red-500 font-bold bg-white px-4 py-2.5 rounded-full shadow-sm hover:shadow transition-all border border-gray-100">
+          <LogOut className="w-4 h-4" /> 登出
+        </button>
+        
+        {/* 👮‍♀️ 老師專用後台入口按鈕：只有符合 ADMIN_EMAILS 的帳號才會顯示 */}
+        {user && ADMIN_EMAILS.includes(user.email) && (
+          <button onClick={openAdminPanel} className="absolute top-4 left-4 flex items-center gap-2 text-gray-500 hover:text-sky-600 font-bold bg-white px-4 py-2.5 rounded-full shadow-sm hover:shadow transition-all border border-gray-100 group" title="開啟老師後台">
+            <Settings className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
+            <span className="hidden sm:inline">成績管理</span>
+          </button>
+        )}
+
+        <div className="bg-white rounded-3xl shadow-xl p-6 max-w-md w-full text-center border-t-8 border-[#243c64] mt-10 sm:mt-0">
+          <GHLogo />
+          <div className="text-sm font-bold text-sky-700 bg-sky-100 py-2.5 px-4 rounded-xl mb-6 inline-block">
+            👋 歡迎登入，{user.email.split('@')[0]}
+          </div>
           <div className="space-y-4">
             <button onClick={() => handleSelectGrade('K1')} className="w-full flex items-center justify-center bg-gray-50 hover:bg-gray-100 text-gray-400 font-bold py-4 px-6 rounded-xl border-2 border-gray-200 transition-all text-xl">
               <span>K1</span><Lock className="w-6 h-6 ml-2" />
@@ -530,6 +803,55 @@ export default function App() {
     );
   }
 
+  if (view === 'playing') {
+    const currentThemeInfo = currentTheme ? GRADES_DATA[currentGrade]?.themes.find(t => t.id === currentTheme) : null;
+    const currentThemeData = currentTheme ? GRADES_DATA[currentGrade]?.data[currentTheme]?.[currentLanguage] || [] : [];
+    
+    return (
+      <div className="min-h-screen bg-sky-50 flex flex-col items-center py-10 p-4 font-sans selection:bg-blue-200">
+        <div className="max-w-2xl w-full">
+          <div className="flex justify-between items-center mb-8 bg-white p-4 rounded-2xl shadow-sm border border-sky-100">
+            <div className="flex items-center gap-2">
+              <button onClick={goThemes} className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition-colors mr-1" title={currentLanguage === 'en' ? 'Back' : '回到主題選單'}><ChevronLeft className="w-5 h-5" /></button>
+              <div className="bg-sky-500 text-white px-4 py-2 rounded-lg font-bold text-lg shadow-sm">{currentLanguage === 'en' ? currentThemeInfo?.enName : currentThemeInfo?.name} - {currentLanguage === 'en' ? `Level ${currentLevel + 1} / ${currentThemeData.length}` : `第 ${currentLevel + 1} / ${currentThemeData.length} 關`}</div>
+            </div>
+            <div className="flex items-center gap-2 text-xl font-bold text-amber-500"><Star className="w-6 h-6 fill-amber-500" />{currentLanguage === 'en' ? 'Score: ' : '得分：'}{score}</div>
+          </div>
+          <p className="text-center text-gray-600 font-medium mb-4 text-lg">{currentLanguage === 'en' ? 'Please click the cards below to build the correct sentence.' : '請點擊下方的字卡，拼出正確的句子。'}</p>
+          <div className="bg-white rounded-3xl shadow-lg p-6 md:p-8 border-b-8 border-sky-100">
+            <div className="mb-8">
+              <div className="text-sm font-bold text-sky-600 mb-2 ml-2">{currentLanguage === 'en' ? 'Answer Area:' : '解答區：'}</div>
+              <div className={`min-h-[120px] p-4 rounded-2xl border-4 border-dashed flex flex-wrap gap-3 items-start transition-colors duration-300 ${status === 'wrong' ? 'border-red-300 bg-red-50' : status === 'correct' ? 'border-green-400 bg-green-50' : 'border-sky-200 bg-sky-50'}`}>
+                {userAnswer.length === 0 && <div className="w-full h-full flex items-center justify-center text-sky-300 font-medium text-lg pt-6 pb-2">{currentLanguage === 'en' ? '( Click cards below )' : '( 點擊下方的字卡 )'}</div>}
+                {userAnswer.map((word) => <button key={word.id} onClick={() => moveToBank(word)} disabled={status === 'correct'} className="bg-white text-gray-800 font-bold text-xl md:text-2xl px-5 py-3 rounded-xl shadow-[0_4px_0_rgb(203,213,225)] border-2 border-gray-100 active:shadow-none active:translate-y-1 transition-all hover:bg-gray-50">{word.text}</button>)}
+              </div>
+            </div>
+            {status === 'wrong' && <div className="flex items-center justify-center gap-2 text-red-500 font-bold text-lg mb-6 animate-pulse"><XCircle className="w-6 h-6" /> {currentLanguage === 'en' ? 'Not quite right!' : '順序好像不太對！'}</div>}
+            {status === 'correct' && <div className="flex items-center justify-center gap-2 text-green-500 font-bold text-xl mb-6 animate-bounce"><CheckCircle2 className="w-7 h-7" /> {currentLanguage === 'en' ? 'Correct!' : '太棒了！答對了！'}</div>}
+            <div className="mb-10">
+              <div className="text-sm font-bold text-sky-600 mb-2 ml-2">{currentLanguage === 'en' ? 'Word Cards:' : '字卡庫：'}</div>
+              <div className="min-h-[120px] bg-gray-50 p-4 rounded-2xl border-2 border-gray-100 flex flex-wrap gap-3 items-center justify-center">
+                {wordBank.map((word) => <button key={word.id} onClick={() => moveToAnswer(word)} className="bg-amber-100 text-amber-900 font-bold text-xl md:text-2xl px-5 py-3 rounded-xl shadow-[0_4px_0_rgb(252,211,77)] border-2 border-amber-200 active:shadow-none active:translate-y-1 transition-all hover:bg-amber-200">{word.text}</button>)}
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              {status !== 'correct' ? (
+                <>
+                  <button onClick={resetLevel} className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-6 rounded-xl shadow-[0_4px_0_rgb(209,213,219)] active:shadow-none active:translate-y-1 transition-all text-lg"><RotateCcw className="w-5 h-5" /> {currentLanguage === 'en' ? 'Reset' : '重設'}</button>
+                  <button onClick={checkAnswer} disabled={userAnswer.length !== (currentThemeData[currentLevel]?.parts?.length || 0)} className="flex-[2] flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 px-6 rounded-xl shadow-[0_4px_0_rgb(2,132,199)] active:shadow-none active:translate-y-1 transition-all text-lg disabled:opacity-50"><Play className="w-5 h-5" /> {currentLanguage === 'en' ? 'Check Answer' : '檢查答案'}</button>
+                </>
+              ) : (
+                <button onClick={nextLevel} className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-xl shadow-[0_4px_0_rgb(22,163,74)] active:shadow-none active:translate-y-1 transition-all text-xl animate-pulse">
+                  {currentLevel === currentThemeData.length - 1 ? (currentLanguage === 'en' ? 'Finish' : '完成') : (currentLanguage === 'en' ? 'Next Level' : '下一關')} <ArrowRight className="w-6 h-6" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (gameFinished) {
     return (
       <div className="min-h-screen bg-blue-50 flex items-center justify-center p-4 font-sans">
@@ -547,50 +869,5 @@ export default function App() {
     );
   }
 
-  const currentThemeData = currentTheme ? GRADES_DATA[currentGrade]?.data[currentTheme]?.[currentLanguage] || [] : [];
-  const currentThemeInfo = currentTheme ? GRADES_DATA[currentGrade]?.themes.find(t => t.id === currentTheme) : null;
-
-  return (
-    <div className="min-h-screen bg-sky-50 flex flex-col items-center py-10 p-4 font-sans selection:bg-blue-200">
-      <div className="max-w-2xl w-full">
-        <div className="flex justify-between items-center mb-8 bg-white p-4 rounded-2xl shadow-sm border border-sky-100">
-          <div className="flex items-center gap-2">
-            <button onClick={goThemes} className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition-colors mr-1" title={currentLanguage === 'en' ? 'Back' : '回到主題選單'}><ChevronLeft className="w-5 h-5" /></button>
-            <div className="bg-sky-500 text-white px-4 py-2 rounded-lg font-bold text-lg shadow-sm">{currentLanguage === 'en' ? currentThemeInfo?.enName : currentThemeInfo?.name} - {currentLanguage === 'en' ? `Level ${currentLevel + 1} / ${currentThemeData.length}` : `第 ${currentLevel + 1} / ${currentThemeData.length} 關`}</div>
-          </div>
-          <div className="flex items-center gap-2 text-xl font-bold text-amber-500"><Star className="w-6 h-6 fill-amber-500" />{currentLanguage === 'en' ? 'Score: ' : '得分：'}{score}</div>
-        </div>
-        <p className="text-center text-gray-600 font-medium mb-4 text-lg">{currentLanguage === 'en' ? 'Please click the cards below to build the correct sentence.' : '請點擊下方的字卡，拼出正確的句子。'}</p>
-        <div className="bg-white rounded-3xl shadow-lg p-6 md:p-8 border-b-8 border-sky-100">
-          <div className="mb-8">
-            <div className="text-sm font-bold text-sky-600 mb-2 ml-2">{currentLanguage === 'en' ? 'Answer Area:' : '解答區：'}</div>
-            <div className={`min-h-[120px] p-4 rounded-2xl border-4 border-dashed flex flex-wrap gap-3 items-start transition-colors duration-300 ${status === 'wrong' ? 'border-red-300 bg-red-50' : status === 'correct' ? 'border-green-400 bg-green-50' : 'border-sky-200 bg-sky-50'}`}>
-              {userAnswer.length === 0 && <div className="w-full h-full flex items-center justify-center text-sky-300 font-medium text-lg pt-6 pb-2">{currentLanguage === 'en' ? '( Click cards below )' : '( 點擊下方的字卡 )'}</div>}
-              {userAnswer.map((word) => <button key={word.id} onClick={() => moveToBank(word)} disabled={status === 'correct'} className="bg-white text-gray-800 font-bold text-xl md:text-2xl px-5 py-3 rounded-xl shadow-[0_4px_0_rgb(203,213,225)] border-2 border-gray-100 active:shadow-none active:translate-y-1 transition-all hover:bg-gray-50">{word.text}</button>)}
-            </div>
-          </div>
-          {status === 'wrong' && <div className="flex items-center justify-center gap-2 text-red-500 font-bold text-lg mb-6 animate-pulse"><XCircle className="w-6 h-6" /> {currentLanguage === 'en' ? 'Not quite right!' : '順序好像不太對！'}</div>}
-          {status === 'correct' && <div className="flex items-center justify-center gap-2 text-green-500 font-bold text-xl mb-6 animate-bounce"><CheckCircle2 className="w-7 h-7" /> {currentLanguage === 'en' ? 'Correct!' : '太棒了！答對了！'}</div>}
-          <div className="mb-10">
-            <div className="text-sm font-bold text-sky-600 mb-2 ml-2">{currentLanguage === 'en' ? 'Word Cards:' : '字卡庫：'}</div>
-            <div className="min-h-[120px] bg-gray-50 p-4 rounded-2xl border-2 border-gray-100 flex flex-wrap gap-3 items-center justify-center">
-              {wordBank.map((word) => <button key={word.id} onClick={() => moveToAnswer(word)} className="bg-amber-100 text-amber-900 font-bold text-xl md:text-2xl px-5 py-3 rounded-xl shadow-[0_4px_0_rgb(252,211,77)] border-2 border-amber-200 active:shadow-none active:translate-y-1 transition-all hover:bg-amber-200">{word.text}</button>)}
-            </div>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            {status !== 'correct' ? (
-              <>
-                <button onClick={resetLevel} className="flex-1 flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-6 rounded-xl shadow-[0_4px_0_rgb(209,213,219)] active:shadow-none active:translate-y-1 transition-all text-lg"><RotateCcw className="w-5 h-5" /> {currentLanguage === 'en' ? 'Reset' : '重設'}</button>
-                <button onClick={checkAnswer} disabled={userAnswer.length !== (currentThemeData[currentLevel]?.parts?.length || 0)} className="flex-[2] flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 px-6 rounded-xl shadow-[0_4px_0_rgb(2,132,199)] active:shadow-none active:translate-y-1 transition-all text-lg disabled:opacity-50"><Play className="w-5 h-5" /> {currentLanguage === 'en' ? 'Check Answer' : '檢查答案'}</button>
-              </>
-            ) : (
-              <button onClick={nextLevel} className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-xl shadow-[0_4px_0_rgb(22,163,74)] active:shadow-none active:translate-y-1 transition-all text-xl animate-pulse">
-                {currentLevel === currentThemeData.length - 1 ? (currentLanguage === 'en' ? 'Finish' : '完成') : (currentLanguage === 'en' ? 'Next Level' : '下一關')} <ArrowRight className="w-6 h-6" />
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return null;
 }
