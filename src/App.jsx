@@ -33,20 +33,34 @@ const CLASSES = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
 
 // 高清康傑教育機構 Logo 元件
 const GHLogo = () => (
-  <div className="bg-[#243c64] text-white p-6 rounded-2xl shadow-md w-full mb-6 flex flex-col items-center relative">
-    <svg viewBox="0 0 100 115" className="w-20 h-24 mb-4">
+  <div className="bg-[#243c64] text-white p-5 sm:p-6 rounded-3xl shadow-md w-full mb-6 flex flex-col items-center relative">
+    <svg viewBox="0 0 100 115" className="w-14 h-16 mb-3">
+      {/* 💡 徹底修改：變為完美的 U 型平滑圓底，消除底部尖角，頂部亦加上微圓角 */}
       <path
-        d="M 5 5 L 95 5 L 95 65 C 95 95 50 110 50 110 C 50 110 5 95 5 65 Z"
+        d="M 12 5 L 88 5 Q 95 5 95 12 L 95 60 A 45 45 0 0 1 5 60 L 5 12 Q 5 5 12 5 Z"
         fill="none"
         stroke="white"
-        strokeWidth="4"
-        strokeLinejoin="round"
+        strokeWidth="5"
       />
-      <text x="50" y="68" fill="white" fontFamily="sans-serif" fontWeight="bold" fontSize="48" textAnchor="middle">GH</text>
+      <text x="50" y="70" fill="white" fontFamily="sans-serif" fontWeight="bold" fontSize="48" textAnchor="middle">GH</text>
     </svg>
-    <div className="text-center font-sans w-full mt-2">
-      <div className="text-3xl font-bold tracking-widest mb-2 text-white">句子拼拼樂</div>
-      <div className="text-sm font-bold tracking-[0.2em] opacity-90 uppercase text-sky-200">Sentence Builder</div>
+
+    {/* 新增：機構中英文名稱區塊 */}
+    <div className="text-center flex flex-col items-center w-full pb-4 mb-4 border-b border-white/20">
+      <div className="text-xl sm:text-2xl font-bold tracking-[0.1em] mb-0.5">康傑教育機構</div>
+      <div className="text-[0.5rem] sm:text-[0.6rem] font-medium tracking-wide uppercase mb-3 opacity-90">Good Health Early Childhood Education Group</div>
+      
+      <div className="text-base sm:text-lg font-medium tracking-wider leading-snug">康傑中英文幼稚園</div>
+      <div className="text-base sm:text-lg font-medium tracking-wider leading-snug mb-1">康傑幼兒中心</div>
+      
+      <div className="text-[0.55rem] sm:text-[0.65rem] opacity-80 leading-tight">Good Health Anglo-Chinese Kindergarten</div>
+      <div className="text-[0.55rem] sm:text-[0.65rem] opacity-80 leading-tight">Good Health Child Care Centre</div>
+    </div>
+
+    {/* 原有：遊戲標題區塊 */}
+    <div className="text-center font-sans w-full">
+      <div className="text-2xl sm:text-3xl font-bold tracking-widest mb-1 text-white">句子拼拼樂</div>
+      <div className="text-xs font-bold tracking-[0.2em] opacity-90 uppercase text-sky-200">Sentence Builder</div>
     </div>
   </div>
 );
@@ -65,14 +79,14 @@ const GRADES_DATA = {
       { id: 'transport', name: '交通', enName: 'Transport', icon: Car, available: { zh: true, en: false } },
     ],
     data: {
-      'emotion': { zh: [{ id: 1, parts: ["文文", "生氣地", "跺腳。"] }, { id: 2, parts: ["小青", "快樂地", "玩耍。"] }, { id: 3, parts: ["妹妹", "傷心地", "哭。"] }, { id: 4, parts: ["哥哥", "愉快地", "唱歌。"] }, { id: 5, parts: ["弟弟", "興奮地", "拍掌。"] }, { id: 6, parts: ["天天", "認真地", "寫字。"] }, { id: 7, parts: ["老師", "耐心地", "教導", "我們。"] }, { id: 8, parts: ["小文", "緊張地", "舉手。"] }, { id: 9, parts: ["小青", "害怕地", "躲起來。"] }, { id: 10, parts: ["弟弟", "疲倦地", "坐下來。"] }], en: [] },
-      'food': { zh: [{ id: 1, parts: ["公公", "愛", "上茶樓。"] }, { id: 2, parts: ["妹妹", "喜歡", "到", "快餐店。"] }, { id: 3, parts: ["蔬菜", "真", "有益。"] }, { id: 4, parts: ["水果", "真", "美味。"] }, { id: 5, parts: ["米飯", "真", "健康。"] }, { id: 6, parts: ["琳琳", "喜歡", "吃", "香蕉。"] }, { id: 7, parts: ["小天", "喜歡", "喝", "果汁。"] }, { id: 8, parts: ["弟弟", "喜歡", "喝", "牛奶。"] }, { id: 9, parts: ["俊俊", "喜歡", "吃", "蘋果。"] }, { id: 10, parts: ["哥哥", "喜歡", "吃", "餅乾。"] }], en: [] },
-      'family': { zh: [{ id: 1, parts: ["爸爸", "在", "書房", "看書。"] }, { id: 2, parts: ["媽媽", "在", "廚房", "煮飯。"] }, { id: 3, parts: ["妹妹", "在", "房間", "睡覺。"] }, { id: 4, parts: ["爺爺", "在", "飯廳", "吃晚餐。"] }, { id: 5, parts: ["我", "在", "客廳", "玩玩具。"] }, { id: 6, parts: ["朗朗", "和", "爸爸", "一起", "玩積木。"] }, { id: 7, parts: ["爸爸", "和", "媽媽", "一起", "整理", "儲物室。"] }, { id: 8, parts: ["公公", "和", "婆婆", "一起", "泡茶。"] }, { id: 9, parts: ["弟弟", "和", "妹妹", "一起", "收拾", "玩具。"] }, { id: 10, parts: ["我", "和", "表弟", "一起", "唱歌。"] }], en: [] },
-      'animal': { zh: [{ id: 1, parts: ["兔子", "在", "草地上", "跳躍。"] }, { id: 2, parts: ["毛毛蟲", "在", "地上", "爬行。"] }, { id: 3, parts: ["蜜蜂", "在", "花叢中", "探花蜜。"] }, { id: 4, parts: ["猴子", "在", "樹上", "吃", "香蕉。"] }, { id: 5, parts: ["獅子", "在", "森林裏", "尋找", "食物。"] }, { id: 6, parts: ["蝴蝶", "在", "花間", "飛舞。"] }, { id: 7, parts: ["斑馬", "住在", "炎熱的", "草原。"] }, { id: 8, parts: ["海獅", "住在", "寒冷的", "海洋。"] }, { id: 9, parts: ["明明", "到", "動物園", "看", "老虎。"] }, { id: 10, parts: ["我", "到", "海洋公園", "看", "海豚表演。"] }], en: [] },
-      'weather': { zh: [{ id: 1, parts: ["今天", "的", "天氣", "晴朗。"] }, { id: 2, parts: ["我", "正在", "觀看", "天氣報告。"] }, { id: 3, parts: ["颱風天", "我們", "不應", "外出。"] }, { id: 4, parts: ["寒冷", "天氣警告", "現正", "生效。"] }, { id: 5, parts: ["媽媽", "正在", "收集", "雨水。"] }, { id: 6, parts: ["天文台", "每天", "預測", "天氣。"] }, { id: 7, parts: ["日本", "冬天", "會", "下雪。"] }, { id: 8, parts: ["冬天", "要", "穿著", "保暖衣物。"] }, { id: 9, parts: ["夏天", "天氣", "很", "炎熱。"] }, { id: 10, parts: ["藍藍", "是", "班上的", "天氣報告員。"] }], en: [] },
-      'nature': { zh: [{ id: 1, parts: ["香港", "有", "四個", "不同季節。"] }, { id: 2, parts: ["樹木", "在", "森林裏", "生長。"] }, { id: 3, parts: ["小明", "收集", "不同形狀的", "樹葉。"] }, { id: 4, parts: ["地上", "有", "很多", "松果。"] }, { id: 5, parts: ["琳琳", "喜歡", "到沙灘", "游泳。"] }, { id: 6, parts: ["欣欣", "學習了", "水循環", "知識。"] }, { id: 7, parts: ["我們", "要", "愛護", "大自然。"] }, { id: 8, parts: ["鳥兒", "在", "空中", "飛翔。"] }, { id: 9, parts: ["我們", "到", "水塘", "參觀。"] }, { id: 10, parts: ["避雷針", "能", "保護", "建築物。"] }], en: [] },
-      'occupation': { zh: [{ id: 1, parts: ["護士", "細心地", "照顧", "病人。"] }, { id: 2, parts: ["老師", "耐心地", "教導", "學生。"] }, { id: 3, parts: ["消防員", "正在", "撲滅", "火災。"] }, { id: 4, parts: ["收銀員", "熟練地", "操作", "收銀機。"] }, { id: 5, parts: ["廚師", "正在", "預備", "食物。"] }, { id: 6, parts: ["醫生", "在醫院", "為病人", "治療。"] }, { id: 7, parts: ["郵差", "每天", "準時地", "派送信件。"] }, { id: 8, parts: ["警察", "保護", "市民的", "安全。"] }, { id: 9, parts: ["理髮師", "為", "顧客", "設計造型。"] }, { id: 10, parts: ["司機", "把乘客", "送到", "目的地。"] }], en: [] },
-      'transport': { zh: [{ id: 1, parts: ["我", "每天", "乘搭", "巴士", "上學。"] }, { id: 2, parts: ["我們", "要", "遵守", "交通", "規則。"] }, { id: 3, parts: ["天星小輪", "在", "維多利亞港", "上", "行駛。"] }, { id: 4, parts: ["藍色", "的士", "在", "大嶼山", "行駛。"] }, { id: 5, parts: ["飛機", "帶", "我們", "到", "世界各地。"] }, { id: 6, parts: ["馬路上", "有", "不同", "的", "交通", "工具。"] }, { id: 7, parts: ["過馬路時", "要", "留意", "四周", "環境。"] }, { id: 8, parts: ["我們", "可用", "八達通", "支付", "車資。"] }, { id: 9, parts: ["妹妹", "在", "港鐵客務中心", "購買", "八達通。"] }, { id: 10, parts: ["電車", "在", "港島區", "的", "街道上", "來回穿梭。"] }], en: [] }
+      'emotion': { zh: [{ id: 1, parts: ["妹妹", "感到", "傷心。"] }, { id: 2, parts: ["欣欣", "感到", "生氣。"] }, { id: 3, parts: ["天天", "感到", "害怕。"] }, { id: 4, parts: ["媽媽", "感到", "高興。"] }, { id: 5, parts: ["爸爸", "感到", "失望。"] }, { id: 6, parts: ["弟弟", "喜歡", "上學。"] }, { id: 7, parts: ["樂樂", "喜歡", "唱歌。"] }, { id: 8, parts: ["哥哥", "喜歡", "看書。"] }, { id: 9, parts: ["姐姐", "喜歡", "畫畫。"] }, { id: 10, parts: ["文文", "喜歡", "跳舞。"] }], en: [] },
+      'food': { zh: [{ id: 1, parts: ["公公", "喜歡", "上茶樓。"] }, { id: 2, parts: ["妹妹", "喜歡", "去快餐店。"] }, { id: 3, parts: ["蔬菜", "真", "有益。"] }, { id: 4, parts: ["水果", "真", "美味。"] }, { id: 5, parts: ["米飯", "真", "健康。"] }, { id: 6, parts: ["琳琳", "想", "吃香蕉。"] }, { id: 7, parts: ["小天", "想", "喝果汁。"] }, { id: 8, parts: ["弟弟", "愛", "喝牛奶。"] }, { id: 9, parts: ["俊俊", "愛", "吃蘋果。"] }, { id: 10, parts: ["哥哥", "愛", "吃餅乾。"] }], en: [] },
+      'family': { zh: [{ id: 1, parts: ["爸爸", "在書房", "看書。"] }, { id: 2, parts: ["媽媽", "在廚房", "洗碗碟。"] }, { id: 3, parts: ["妹妹", "在睡房", "睡覺。"] }, { id: 4, parts: ["爺爺", "在飯廳", "吃晚餐。"] }, { id: 5, parts: ["弟弟", "在客廳", "玩玩具。"] }, { id: 6, parts: ["姐姐", "在房間", "畫圖畫。"] }, { id: 7, parts: ["爸爸", "和媽媽", "一起", "收拾房間。"] }, { id: 8, parts: ["公公", "和婆婆", "一起", "泡茶。"] }, { id: 9, parts: ["弟弟", "和妹妹", "一起", "收拾玩具。"] }, { id: 10, parts: ["我", "和表弟", "一起", "唱歌。"] }], en: [] },
+      'animal': { zh: [{ id: 1, parts: ["兔子", "在", "草地上", "跳。"] }, { id: 2, parts: ["毛毛蟲", "在", "地上", "爬。"] }, { id: 3, parts: ["小鳥", "在", "天上", "飛。"] }, { id: 4, parts: ["小狗", "在", "公園", "散步。"] }, { id: 5, parts: ["猴子", "在", "樹上", "吃香蕉。"] }, { id: 6, parts: ["小貓", "在", "椅子上", "睡覺。"] }, { id: 7, parts: ["明明", "到", "動物園", "看老虎。"] }, { id: 8, parts: ["天天", "到", "海洋公園", "看海豚。"] }, { id: 9, parts: ["欣欣", "到", "農場", "看小羊。"] }, { id: 10, parts: ["行行", "到", "濕地公園", "看小琵鷺。"] }], en: [] },
+      'weather': { zh: [{ id: 1, parts: ["今天", "天氣", "很", "晴朗。"] }, { id: 2, parts: ["夏天", "天氣", "很", "炎熱。"] }, { id: 3, parts: ["冬天", "天氣", "很", "寒冷。"] }, { id: 4, parts: ["今天", "天空", "有", "白雲。"] }, { id: 5, parts: ["日本", "冬天", "會", "下雪。"] }, { id: 6, parts: ["早上", "山上", "有", "霧。"] }, { id: 7, parts: ["寒冷天氣警告", "現正", "生效。"] }, { id: 8, parts: ["紅色暴雨警告信號", "現正", "生效。"] }, { id: 9, parts: ["暴雨時", "天空", "出現", "雷電。"] }, { id: 10, parts: ["颱風時", "戶外", "會有", "狂風。"] }], en: [] },
+      'nature': { zh: [{ id: 1, parts: ["山上", "有", "很多", "大樹。"] }, { id: 2, parts: ["樹木", "在", "森林裏", "生長。"] }, { id: 3, parts: ["天空", "有", "明亮的", "太陽。"] }, { id: 4, parts: ["草地上", "有", "美麗的", "花朵。"] }, { id: 5, parts: ["小河", "在", "山下", "流動。"] }, { id: 6, parts: ["小鳥", "在", "樹上", "唱歌。"] }, { id: 7, parts: ["我們", "要", "保護", "大自然。"] }, { id: 8, parts: ["我們", "要", "愛惜", "花草樹木。"] }, { id: 9, parts: ["水塘", "為我們", "提供", "食水。"] }, { id: 10, parts: ["水蒸氣", "會", "變成", "雲。"] }], en: [] },
+      'occupation': { zh: [{ id: 1, parts: ["護士", "在醫院", "照顧", "病人。"] }, { id: 2, parts: ["老師", "在學校", "教導", "學生。"] }, { id: 3, parts: ["消防員", "在火場", "撲滅", "火災。"] }, { id: 4, parts: ["救生員", "在泳池", "保護", "泳客安全。"] }, { id: 5, parts: ["廚師", "在廚房", "煮", "食物。"] }, { id: 6, parts: ["醫生", "在診所", "治療", "病人。"] }, { id: 7, parts: ["郵差", "負責", "派送", "信件。"] }, { id: 8, parts: ["建築工人", "負責", "建造", "房屋。"] }, { id: 9, parts: ["理髮師", "在髮型屋", "為客人", "剪頭髮。"] }, { id: 10, parts: ["警察", "負責", "維持", "秩序。"] }], en: [] },
+      'transport': { zh: [{ id: 1, parts: ["哥哥", "坐", "小巴", "到葵芳。"] }, { id: 2, parts: ["媽媽", "坐", "港鐵", "到青衣。"] }, { id: 3, parts: ["妹妹", "坐", "電車", "到中環。"] }, { id: 4, parts: ["天天", "坐", "輕鐵", "到屯門。"] }, { id: 5, parts: ["天星小輪", "在", "維多利亞港", "行駛。"] }, { id: 6, parts: ["巴士", "在", "馬路上", "行駛。"] }, { id: 7, parts: ["藍色的士", "在", "大嶼山", "行駛。"] }, { id: 8, parts: ["馬路上", "有", "不同的", "交通工具。"] }, { id: 9, parts: ["我們", "可以", "用八達通", "支付車資。"] }, { id: 10, parts: ["妹妹", "在港鐵客務中心", "購買", "八達通。"] }], en: [] }
     }
   },
   'K3': {
@@ -106,6 +120,22 @@ const shuffleArray = (array) => {
     [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
   }
   return newArray;
+};
+
+// --- 新增：智能專名號 (Proper Noun) 處理器 ---
+// 將所有出現過的人名、地名、國家、機構及節日加入名單
+const PROPER_NOUNS = [
+  "文文", "小青", "天天", "小文", "樂樂", "琳琳", "小天", "俊俊", "朗朗", "明明", "欣欣", "行行", "藍藍", "小明", "小康", "安妮", "安安", "佳佳", "延延", "智智", "言言", "庭庭", "晴晴", "子欣", "悅悅", "雅雅", "屈原", "耶穌",
+  "香港", "日本", "中國", "英國", "法國", "韓國", "西班牙", "埃及", "葵芳", "青衣", "中環", "屯門", "大嶼山", "尖沙咀海旁", 
+  "海洋公園", "濕地公園", "天文台", "萬里長城", "倫敦塔橋", "艾菲爾鐵塔", "金字塔", "天星小輪", "維多利亞港", "港鐵客務中心", "港鐵", "食物銀行", "地球", "八達通",
+  "母親節", "元宵節", "重陽節", "聖誕節", "復活節", "農曆新年", "端午節", "中秋節", "環球美食節", "世界關燈日"
+].sort((a, b) => b.length - a.length);
+
+const PROPER_NOUNS_REGEX = new RegExp(`(${PROPER_NOUNS.join('|')})`, 'g');
+
+const formatProperNouns = (text) => {
+  if (!text) return '';
+  return text.replace(PROPER_NOUNS_REGEX, '<u class="underline underline-offset-[5px] decoration-[2px]">$1</u>');
 };
 
 export default function App() {
@@ -987,7 +1017,7 @@ export default function App() {
               <div className="text-sm font-bold text-sky-600 mb-2 ml-2">{currentLanguage === 'en' ? 'Answer Area:' : '解答區：'}</div>
               <div className={`min-h-[120px] p-4 rounded-2xl border-4 border-dashed flex flex-wrap gap-3 items-start transition-colors duration-300 ${status === 'wrong' ? 'border-red-300 bg-red-50' : status === 'correct' ? 'border-green-400 bg-green-50' : 'border-sky-200 bg-sky-50'}`}>
                 {userAnswer.length === 0 && <div className="w-full h-full flex items-center justify-center text-sky-300 font-medium text-lg pt-6 pb-2">{currentLanguage === 'en' ? '( Click cards below )' : '( 點擊下方的字卡 )'}</div>}
-                {userAnswer.map((word) => <button key={word.id} onClick={() => moveToBank(word)} disabled={status === 'correct'} className="bg-white text-gray-800 font-bold text-xl md:text-2xl px-5 py-3 rounded-xl shadow-[0_4px_0_rgb(203,213,225)] border-2 border-gray-100 active:shadow-none active:translate-y-1 transition-all hover:bg-gray-50">{word.text}</button>)}
+                {userAnswer.map((word) => <button key={word.id} onClick={() => moveToBank(word)} disabled={status === 'correct'} className="bg-white text-gray-800 font-bold text-xl md:text-2xl px-5 py-3 rounded-xl shadow-[0_4px_0_rgb(203,213,225)] border-2 border-gray-100 active:shadow-none active:translate-y-1 transition-all hover:bg-gray-50" dangerouslySetInnerHTML={{ __html: formatProperNouns(word.text) }} />)}
               </div>
             </div>
             {status === 'wrong' && <div className="flex items-center justify-center gap-2 text-red-500 font-bold text-lg mb-6 animate-pulse"><XCircle className="w-6 h-6" /> {currentLanguage === 'en' ? 'Not quite right!' : '順序好像不太對！'}</div>}
@@ -1002,7 +1032,7 @@ export default function App() {
             <div className="mb-10">
               <div className="text-sm font-bold text-sky-600 mb-2 ml-2">{currentLanguage === 'en' ? 'Word Cards:' : '字卡庫：'}</div>
               <div className="min-h-[120px] bg-gray-50 p-4 rounded-2xl border-2 border-gray-100 flex flex-wrap gap-3 items-center justify-center">
-                {wordBank.map((word) => <button key={word.id} onClick={() => moveToAnswer(word)} className="bg-amber-100 text-amber-900 font-bold text-xl md:text-2xl px-5 py-3 rounded-xl shadow-[0_4px_0_rgb(252,211,77)] border-2 border-amber-200 active:shadow-none active:translate-y-1 transition-all hover:bg-amber-200">{word.text}</button>)}
+                {wordBank.map((word) => <button key={word.id} onClick={() => moveToAnswer(word)} className="bg-amber-100 text-amber-900 font-bold text-xl md:text-2xl px-5 py-3 rounded-xl shadow-[0_4px_0_rgb(252,211,77)] border-2 border-amber-200 active:shadow-none active:translate-y-1 transition-all hover:bg-amber-200" dangerouslySetInnerHTML={{ __html: formatProperNouns(word.text) }} />)}
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
