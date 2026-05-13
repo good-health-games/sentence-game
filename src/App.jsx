@@ -4,7 +4,8 @@ import { CheckCircle2, XCircle, RotateCcw, ArrowRight, Play, Star, School, Lock,
 // --- Firebase 初始化區塊開始 ---
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, doc } from 'firebase/firestore';
+// 💡 更新：加入 getDoc 和 setDoc
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, writeBatch, doc, getDoc, setDoc } from 'firebase/firestore';
 
 // ⚠️ 已經使用你專屬的 firebaseConfig
 const firebaseConfig = {
@@ -182,28 +183,42 @@ export default function App() {
   const isAdmin = user && ADMIN_EMAILS.includes(user.email);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoadingAuth(false);
-      
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
-        setView('login');
+        setUser(null);
+        setLoadingAuth(false);
+        if (view !== 'login') setView('login');
+        return;
+      }
+
+      setUser(currentUser);
+      const checkIsAdmin = ADMIN_EMAILS.includes(currentUser.email);
+      
+      if (checkIsAdmin) {
+        setView('home');
+        setLoadingAuth(false);
       } else {
-        const checkIsAdmin = ADMIN_EMAILS.includes(currentUser.email);
-        if (!checkIsAdmin) {
-          // 如果是一般學生，檢查是否有儲存過分類資料
-          const savedProfile = localStorage.getItem(`gh_profile_${currentUser.email}`);
-          if (savedProfile) {
-            const parsedProfile = JSON.parse(savedProfile);
-            setStudentProfile(parsedProfile);
-            setTempProfile(parsedProfile); // 確保每次修改都載入現有資料
+        // 💡 核心修改：改為從 Firebase 雲端讀取學生資料，而不是 localStorage
+        try {
+          const userDocRef = doc(db, "users", currentUser.email);
+          const userDocSnap = await getDoc(userDocRef);
+          
+          if (userDocSnap.exists()) {
+            // 如果雲端有資料，直接載入並進入首頁
+            const profileData = userDocSnap.data();
+            setStudentProfile(profileData);
+            setTempProfile(profileData);
             setView('home');
           } else {
-            setTempProfile({ fullName: '', branch: '青衣', grade: 'K3', class: 'A' }); // 預設值
+            // 如果雲端無資料（第一次登入），進入設定畫面
+            setTempProfile({ fullName: '', branch: '青衣', grade: 'K3', class: 'A' });
             setView('profile_setup');
           }
-        } else {
-          setView('home');
+        } catch (error) {
+          console.error("讀取學生資料失敗:", error);
+          setView('profile_setup'); // 發生錯誤時先去設定頁
+        } finally {
+          setLoadingAuth(false);
         }
       }
     });
@@ -221,15 +236,26 @@ export default function App() {
     }
   };
 
-  const saveStudentProfile = () => {
+  // 💡 核心修改：將學生資料存入 Firebase 雲端
+  const saveStudentProfile = async () => {
     if (!tempProfile.fullName || tempProfile.fullName.trim() === '') {
       setProfileError('請輸入中文全名');
       return;
     }
     setProfileError('');
-    localStorage.setItem(`gh_profile_${user.email}`, JSON.stringify(tempProfile));
-    setStudentProfile(tempProfile);
-    setView('home');
+    setLoadingAuth(true); // 顯示載入中畫面
+    
+    try {
+      // 將資料寫入名為 "users" 的集合中，並用 Email 作為文件 ID
+      await setDoc(doc(db, "users", user.email), tempProfile);
+      setStudentProfile(tempProfile);
+      setView('home');
+    } catch (error) {
+      console.error("儲存學生資料失敗:", error);
+      setProfileError('儲存失敗，請檢查網絡連線。');
+    } finally {
+      setLoadingAuth(false);
+    }
   };
 
   const handleLogout = async () => {
