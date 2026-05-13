@@ -264,7 +264,7 @@ export default function App() {
         timestamp: serverTimestamp()
       });
     } catch (e) {
-      console.error("儲存成績發生錯誤: ", e);
+      console.error("儲存成績發生了錯誤: ", e);
     }
   };
 
